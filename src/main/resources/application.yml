@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: OAuth2 Demo
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23liWvl8sE2GcWMfbq
+            client-secret: 472e1108f70f8c9658b7e02b52911f1a193dd83e
+          google:
+            client-id: 340167707591-gfbgoenkn6vov85rv9rqqev782di0u1l.apps.googleusercontent.com
+            client-secret: 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
+  datasource:
+    url: jdbc:postgresql://localhost:5432/oauth2demo
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: POSTGRESQL
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
