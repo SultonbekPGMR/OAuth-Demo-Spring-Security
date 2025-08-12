@@ -1,4 +1,5 @@
 spring:
+
   application:
     name: OAuth2 Demo
   security:
@@ -25,8 +26,14 @@ spring:
         format_sql: true
     database: POSTGRESQL
 
+
+
+
+
 logging:
   level:
     org:
       springframework:
         security: TRACE
+    com.sultonbek1547.oauth2demo.config: DEBUG
+    org.springframework.security: DEBUG
