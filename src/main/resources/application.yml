@@ -1,39 +1,212 @@
+# Default Profile
 spring:
-
   application:
-    name: OAuth2 Demo
-  security:
-    oauth2:
-      client:
-        registration:
-          github:
-            client-id: Ov23liWvl8sE2GcWMfbq
-            client-secret: 472e1108f70f8c9658b7e02b52911f1a193dd83e
-          google:
-            client-id: 340167707591-gfbgoenkn6vov85rv9rqqev782di0u1l.apps.googleusercontent.com
-            client-secret: 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
+    name: auth-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/oauth2demo
-    driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+
+
+
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    database: POSTGRESQL
+        use_sql_comments: false
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
 
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000 # 1 hour
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization.write-dates-as-timestamps: false
+    deserialization.fail-on-unknown-properties: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 
 logging:
   level:
-    org:
-      springframework:
-        security: TRACE
-    com.sultonbek1547.oauth2demo.config: DEBUG
-    org.springframework.security: DEBUG
+    com:
+      sultonbek1547:
+        oauth2demo:
+          config:
+            JwtAuthenticationFilter: DEBUG
+          "": DEBUG
+
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  error:
+    include-stacktrace: never
+    include-message: always
+    include-binding-errors: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health.show-details: when-authorized
+    info.enabled: true
+  health:
+    redis.enabled: true
+    db.enabled: true
+  info:
+    env.enabled: true
+    java.enabled: true
+    build.enabled: true
+
+
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    display-request-duration: true
+    groups-order: desc
+    operations-sorter: method
+    disable-swagger-default-url: true
+    use-root-path: true
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  liquibase:
+    enabled: false
+
+
+
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  jpa:
+    show-sql: false
+
+  liquibase:
+    enabled: true
+
+
+
+management:
+  endpoint:
+    health.show-details: never
+
+server:
+  ssl:
+    enabled: ${SSL_ENABLED:true}
+    key-store: ${SSL_KEYSTORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+
+---
+# Test Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  liquibase:
+    enabled: false
+
+  mail:
+    host: localhost
+    port: 25
+
