@@ -145,7 +145,7 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
 
 <changeSet id="005-insert-default-roles" author="developer">
     <insert tableName="roles">
-        <column name="name" value="ROLE_USER"/>
+        <column name="name" value="ROLE_CLIENT"/>
         <column name="description" value="Default user role with basic permissions"/>
     </insert>
 

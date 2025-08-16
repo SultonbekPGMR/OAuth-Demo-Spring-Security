@@ -11,6 +11,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Component
 @Slf4j
@@ -36,8 +37,12 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         } else if (request.getAttribute("invalid") != null) {
             message = "Invalid access token";
         }
-        
-        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(message);
+
+        ApiResponseDto<Object> errorResponse = ApiResponseDto.builder()
+                .success(false)
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .build();
         
         objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }

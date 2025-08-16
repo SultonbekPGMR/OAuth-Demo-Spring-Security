@@ -30,130 +30,115 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseDto<Map<String, String>>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
-        
+
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         log.warn("Validation errors: {}", errors);
-        
-        return ResponseEntity.badRequest()
-                .body(ApiResponseDto.<Map<String, String>>builder()
-                        .success(false)
-                        .message("Validation failed")
-                        .data(errors)
-                        .build());
+
+        return ApiResponseDto.badRequest("Validation failed");
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
-        
+
         log.warn("Authentication error: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error(ex.getMessage()));
+
+        return ApiResponseDto.unauthorized(ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleBadCredentialsException(
             BadCredentialsException ex, WebRequest request) {
-        
+
         log.warn("Bad credentials: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error("Invalid email or password"));
+
+        return ApiResponseDto.unauthorized("Invalid email or password");
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleUsernameNotFoundException(
             UsernameNotFoundException ex, WebRequest request) {
-        
+
         log.warn("User not found: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error("Invalid email or password"));
+
+        return ApiResponseDto.unauthorized("Invalid email or password");
     }
 
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleInvalidTokenException(
             InvalidTokenException ex, WebRequest request) {
-        
+
         log.warn("Invalid token: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error(ex.getMessage()));
+
+        return ApiResponseDto.unauthorized(ex.getMessage());
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleExpiredJwtException(
             ExpiredJwtException ex, WebRequest request) {
-        
+
         log.warn("Expired JWT: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error("Token expired"));
+
+        return ApiResponseDto.unauthorized("Token expired");
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleJwtException(
             JwtException ex, WebRequest request) {
-        
+
         log.warn("JWT error: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponseDto.error("Invalid token"));
+
+        return ApiResponseDto.unauthorized("Invalid token");
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleUserAlreadyExistsException(
             UserAlreadyExistsException ex, WebRequest request) {
-        
+
         log.warn("User already exists: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponseDto.error(ex.getMessage()));
+
+        return ApiResponseDto.error(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleUserNotFoundException(
             UserNotFoundException ex, WebRequest request) {
-        
+
         log.warn("User not found: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponseDto.error(ex.getMessage()));
+
+        return ApiResponseDto.notFound(ex.getMessage());
     }
 
     @ExceptionHandler(AccountNotVerifiedException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleAccountNotVerifiedException(
             AccountNotVerifiedException ex, WebRequest request) {
-        
+
         log.warn("Account not verified: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponseDto.error(ex.getMessage()));
+
+        return ApiResponseDto.error(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
-        
+
         log.warn("Access denied: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponseDto.error("Access denied - insufficient privileges"));
+
+        return ApiResponseDto.error("Access denied - insufficient privileges", HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, WebRequest request) {
-        
+
         log.error("Data integrity violation: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
+
         String message = "Data integrity violation";
         if (ex.getMessage() != null) {
             if (ex.getMessage().contains("email")) {
@@ -162,78 +147,70 @@ public class GlobalExceptionHandler {
                 message = "Username already exists";
             }
         }
-        
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponseDto.error(message));
+
+        return ApiResponseDto.error(message, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex, WebRequest request) {
-        
+
         log.warn("Invalid JSON: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.badRequest()
-                .body(ApiResponseDto.error("Invalid JSON format"));
+
+        return ApiResponseDto.badRequest("Invalid JSON format");
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleMissingServletRequestParameterException(
             MissingServletRequestParameterException ex, WebRequest request) {
-        
+
         log.warn("Missing parameter: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.badRequest()
-                .body(ApiResponseDto.error("Missing required parameter: " + ex.getParameterName()));
+
+        return ApiResponseDto.badRequest("Missing required parameter: " + ex.getParameterName());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException ex, WebRequest request) {
-        
+
         log.warn("Type mismatch: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.badRequest()
-                .body(ApiResponseDto.error("Invalid parameter type for: " + ex.getName()));
+
+        return ApiResponseDto.badRequest("Invalid parameter type for: " + ex.getName());
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleNoHandlerFoundException(
             NoHandlerFoundException ex, WebRequest request) {
-        
+
         log.warn("No handler found: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponseDto.error("Endpoint not found"));
+
+        return ApiResponseDto.notFound("Endpoint not found");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-        
+
         log.warn("Illegal argument: {} for request: {}", ex.getMessage(), request.getDescription(false));
-        
-        return ResponseEntity.badRequest()
-                .body(ApiResponseDto.error("Invalid request: " + ex.getMessage()));
+
+        return ApiResponseDto.badRequest("Invalid request: " + ex.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
-        
+
         log.error("Runtime exception: {} for request: {}", ex.getMessage(), request.getDescription(false), ex);
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponseDto.error("An error occurred while processing your request"));
+
+        return ApiResponseDto.error("An error occurred while processing your request", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDto<Void>> handleGenericException(
             Exception ex, WebRequest request) {
-        
+
         log.error("Unexpected error: {} for request: {}", ex.getMessage(), request.getDescription(false), ex);
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponseDto.error("An unexpected error occurred"));
+
+        return ApiResponseDto.error("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

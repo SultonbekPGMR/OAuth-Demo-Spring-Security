@@ -1,6 +1,8 @@
 package com.sultonbek1547.oauth2demo.repository;
 
 import com.sultonbek1547.oauth2demo.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,4 +36,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("DELETE FROM User u WHERE u.enabled = false AND u.createdAt < :cutoffDate")
     void deleteUnverifiedUsersOlderThan(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.name = 'ROLE_CLIENT'")
+    Page<User> findClients(Pageable pageable);
+
 }

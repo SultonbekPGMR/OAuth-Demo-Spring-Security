@@ -15,6 +15,8 @@ import com.sultonbek1547.oauth2demo.util.EmailService;
 import com.sultonbek1547.oauth2demo.util.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -156,7 +158,7 @@ public class UserManagementService {
         }
 
         String email = jwtTokenUtil.getUsernameFromToken(refreshTokenValue);
-        
+
         RefreshToken storedToken = refreshTokenRepository.findByTokenAndUserEmail(refreshTokenValue, email)
                 .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
@@ -167,7 +169,7 @@ public class UserManagementService {
 
         User user = storedToken.getUser();
         CustomUserPrincipal userPrincipal = new CustomUserPrincipal(user);
-        
+
         Set<String> roles = user.getRoles().stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
@@ -193,7 +195,7 @@ public class UserManagementService {
     @Transactional
     public void logout(String refreshToken) {
         log.info("Processing logout request");
-        
+
         if (refreshToken != null && jwtTokenUtil.isRefreshToken(refreshToken)) {
             String email = jwtTokenUtil.getUsernameFromToken(refreshToken);
             refreshTokenRepository.deleteByTokenAndUserEmail(refreshToken, email);
@@ -227,15 +229,15 @@ public class UserManagementService {
     @Transactional
     public void forgotPassword(String email) {
         Optional<User> userOpt = userRepository.findByEmail(email);
-        
+
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             String resetToken = jwtTokenUtil.generatePasswordResetToken(email);
-            
+
             user.setPasswordResetToken(resetToken);
             user.setPasswordResetTokenExpiry(LocalDateTime.now().plusHours(1));
             userRepository.save(user);
-            
+
             emailService.sendPasswordReset(email, resetToken);
             log.info("Password reset email sent to: {}", email);
         } else {
@@ -246,8 +248,8 @@ public class UserManagementService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequestDto request) {
-        if (!jwtTokenUtil.isPasswordResetToken(request.getToken()) || 
-            jwtTokenUtil.isTokenExpired(request.getToken())) {
+        if (!jwtTokenUtil.isPasswordResetToken(request.getToken()) ||
+                jwtTokenUtil.isTokenExpired(request.getToken())) {
             throw new InvalidTokenException("Invalid or expired reset token");
         }
 
@@ -256,7 +258,7 @@ public class UserManagementService {
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
         if (!request.getToken().equals(user.getPasswordResetToken()) ||
-            user.getPasswordResetTokenExpiry().isBefore(LocalDateTime.now())) {
+                user.getPasswordResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new InvalidTokenException("Invalid or expired reset token");
         }
 
@@ -294,7 +296,7 @@ public class UserManagementService {
     public UserProfileDto getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthenticationException("User not found"));
-        
+
         return UserProfileDto.fromEntity(user);
     }
 
@@ -312,7 +314,7 @@ public class UserManagementService {
         if (request.getPhoneNumber() != null) {
             user.setPhoneNumber(request.getPhoneNumber());
         }
-        
+
         user.setUpdatedAt(LocalDateTime.now());
         user = userRepository.save(user);
 
@@ -322,10 +324,10 @@ public class UserManagementService {
 
     private Set<Role> getDefaultRoles() {
         Set<Role> roles = new HashSet<>();
-        Role userRole = roleRepository.findByName("ROLE_USER")
+        Role userRole = roleRepository.findByName("ROLE_CLIENT")
                 .orElseGet(() -> {
                     Role newRole = new Role();
-                    newRole.setName("ROLE_USER");
+                    newRole.setName("ROLE_CLIENT");
                     newRole.setDescription("Default user role");
                     return roleRepository.save(newRole);
                 });
@@ -340,5 +342,10 @@ public class UserManagementService {
                 .expiryDate(LocalDateTime.now().plusDays(30))
                 .build();
         refreshTokenRepository.save(refreshToken);
+    }
+
+    public Page<UserDto> getClients(Pageable pageable) {
+        return userRepository.findClients(pageable)
+                .map(UserDto::fromEntity); // map each User → UserDto
     }
 }
